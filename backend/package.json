@@ -16,7 +16,12 @@
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
-    "mongoose": "^9.2.2"
+    "mongoose": "^9.2.2",
+    "joi": "^17.11.0",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.9.7",
+    "pdfkit": "^0.13.0",
+    "moment-timezone": "^0.5.45"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"

@@ -1,31 +1,55 @@
+// Routes: Lịch hẹn khám bệnh
 const express = require("express");
 const router = express.Router();
 const appointmentController = require("../controllers/appointmentController");
 const { authMiddleware } = require("../middleware/authMiddleware");
 const { authorizeRoles } = require("../middleware/roleMiddleware");
 
-// User đặt lịch
+// Patient - Create and view appointments
 router.post(
   "/",
   authMiddleware,
-  authorizeRoles("user"),
+  authorizeRoles("patient"),
   appointmentController.createAppointment,
 );
-
-// User xem lịch của mình
 router.get(
   "/my",
   authMiddleware,
-  authorizeRoles("user"),
+  authorizeRoles("patient"),
   appointmentController.getMyAppointments,
 );
+router.post(
+  "/:appointmentId/cancel",
+  authMiddleware,
+  authorizeRoles("patient", "doctor"),
+  appointmentController.cancelAppointment,
+);
+router.get(
+  "/:appointmentId/download-pdf",
+  authMiddleware,
+  authorizeRoles("patient", "doctor", "admin"),
+  appointmentController.downloadAppointmentPDF,
+);
 
-// Doctor xem lịch của mình
+// Doctor - View and manage appointments
 router.get(
   "/doctor",
   authMiddleware,
   authorizeRoles("doctor"),
   appointmentController.getDoctorAppointments,
+);
+router.put(
+  "/:appointmentId/status",
+  authMiddleware,
+  authorizeRoles("doctor", "admin"),
+  appointmentController.updateAppointmentStatus,
+);
+
+// Public - Get appointment details
+router.get(
+  "/:appointmentId",
+  authMiddleware,
+  appointmentController.getAppointmentById,
 );
 
 module.exports = router;
