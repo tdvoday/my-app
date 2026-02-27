@@ -7,20 +7,37 @@ const {
   sendPasswordResetEmail,
 } = require("../utils/emailService");
 
-/**
- * REGISTER: Create new patient account
- * - Validate input
- * - Hash password
- * - Generate verification token
- * - Send verification email
- */
 exports.register = async (req, res) => {
   try {
     const { name, email, password, phone } = req.body;
 
-    if (!name || !email || !password) {
+    // Validate required fields
+    if (!name || !email || !password || !phone) {
       return res.status(400).json({
-        message: "Name, email, and password are required",
+        message: "Name, email, password, and phone are required",
+      });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        message: "Invalid email format",
+      });
+    }
+
+    // Validate phone (at least 10 digits)
+    const phoneRegex = /^\d{10,}$/;
+    if (!phoneRegex.test(phone.replace(/\D/g, ""))) {
+      return res.status(400).json({
+        message: "Phone number must have at least 10 digits",
+      });
+    }
+
+    // Validate password (at least 6 characters)
+    if (password.length < 6) {
+      return res.status(400).json({
+        message: "Password must be at least 6 characters long",
       });
     }
 
@@ -29,22 +46,33 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: "Email already exists" });
     }
 
+    // Hash password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // DEV MODE: auto verify email
+    // Generate verification token
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+    const verificationTokenHash = crypto
+      .createHash("sha256")
+      .update(verificationToken)
+      .digest("hex");
+
     const user = await User.create({
       name,
       email,
       password: hashedPassword,
       phone,
       role: "patient",
-      isEmailVerified: true,
-      status: "active",
+      emailVerificationToken: verificationTokenHash,
+      emailVerificationExpires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
+      isEmailVerified: false,
     });
 
+    // Send verification email
+    await sendVerificationEmail(email, name, verificationToken);
+
     res.status(201).json({
-      message: "Registration successful",
+      message: "Registration successful!",
       user: {
         id: user._id,
         name: user.name,
@@ -109,13 +137,6 @@ exports.verifyEmail = async (req, res) => {
   }
 };
 
-/**
- * LOGIN: Verify credentials and generate JWT token
- * - Check if email exists
- * - Verify password
- * - Generate JWT token
- * - Return user info and token
- */
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -149,11 +170,11 @@ exports.login = async (req, res) => {
     }
 
     // Check if email is verified (for patients)
-    if (user.role === "patient" && !user.isEmailVerified) {
-      return res.status(403).json({
-        message: "Please verify your email before logging in",
-      });
-    }
+    // if (user.role === "patient" && !user.isEmailVerified) {
+    //   return res.status(403).json({
+    //     message: "Please verify your email before logging in",
+    //   });
+    // }
 
     // Generate JWT token
     const token = jwt.sign(
@@ -182,12 +203,6 @@ exports.login = async (req, res) => {
   }
 };
 
-/**
- * FORGOT PASSWORD: Generate password reset token
- * - Find user by email
- * - Generate reset token
- * - Send reset email
- */
 exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
@@ -229,12 +244,6 @@ exports.forgotPassword = async (req, res) => {
   }
 };
 
-/**
- * RESET PASSWORD: Reset user password with token
- * - Validate token
- * - Hash new password
- * - Update password
- */
 exports.resetPassword = async (req, res) => {
   try {
     const { token, newPassword } = req.body;
@@ -276,12 +285,6 @@ exports.resetPassword = async (req, res) => {
   }
 };
 
-/**
- * ASSIGN DOCTOR ROLE: Grant doctor privileges to patient (Admin only)
- * - Validate input
- * - Update user role to doctor
- * - Update doctor-specific fields
- */
 exports.assignDoctorRole = async (req, res) => {
   try {
     const { userId, specialty, hospital, phone, certificate, experience, bio } =
@@ -293,6 +296,16 @@ exports.assignDoctorRole = async (req, res) => {
       });
     }
 
+    // Validate phone if provided (at least 10 digits)
+    if (phone) {
+      const phoneRegex = /^\d{10,}$/;
+      if (!phoneRegex.test(phone.replace(/\D/g, ""))) {
+        return res.status(400).json({
+          message: "Phone number must have at least 10 digits",
+        });
+      }
+    }
+
     const user = await User.findById(userId);
     if (!user) {
       return res.status(400).json({ message: "User not found" });
@@ -301,10 +314,10 @@ exports.assignDoctorRole = async (req, res) => {
     user.role = "doctor";
     user.specialty = specialty;
     user.hospital = hospital;
-    user.phone = phone;
-    user.certificate = certificate;
-    user.experience = experience;
-    user.bio = bio;
+    if (phone) user.phone = phone;
+    if (certificate) user.certificate = certificate;
+    if (experience) user.experience = experience;
+    if (bio) user.bio = bio;
 
     await user.save();
 

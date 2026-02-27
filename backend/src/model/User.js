@@ -29,7 +29,6 @@ const userSchema = new mongoose.Schema(
     // Các trường thông tin chung
     phone: String,
 
-    // ========== EMAIL VERIFICATION ==========
     isEmailVerified: {
       type: Boolean,
       default: false,
@@ -38,7 +37,7 @@ const userSchema = new mongoose.Schema(
     emailVerificationExpires: Date,
 
     // ========== TRƯỜNG BẮT BUỘC CHO DOCTOR ==========
-    // Chuyên khoa (vd: "Nội", "Ngoại", "Nhi", "Tai Mũi Họng")
+
     specialty: String,
     // Nơi làm việc
     hospital: String,
@@ -50,13 +49,7 @@ const userSchema = new mongoose.Schema(
     bio: String,
     // Ảnh đại diện
     avatar: String,
-    // Điểm đánh giá (trung bình từ các đánh giá)
-    rating: {
-      type: Number,
-      default: 0,
-      min: 0,
-      max: 5,
-    },
+
     // Trạng thái tài khoản (active/inactive/locked)
     status: {
       type: String,

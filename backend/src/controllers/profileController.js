@@ -52,6 +52,16 @@ exports.updateMyProfile = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    // Validate phone if provided (at least 10 digits)
+    if (phone) {
+      const phoneRegex = /^\d{10,}$/;
+      if (!phoneRegex.test(phone.replace(/\D/g, ""))) {
+        return res.status(400).json({
+          message: "Phone number must have at least 10 digits",
+        });
+      }
+    }
+
     // Update common fields
     if (name) user.name = name;
     if (phone) user.phone = phone;
@@ -217,6 +227,16 @@ exports.updateUser = async (req, res) => {
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
+    }
+
+    // Validate phone if provided (at least 10 digits)
+    if (phone) {
+      const phoneRegex = /^\d{10,}$/;
+      if (!phoneRegex.test(phone.replace(/\D/g, ""))) {
+        return res.status(400).json({
+          message: "Phone number must have at least 10 digits",
+        });
+      }
     }
 
     if (name) user.name = name;
