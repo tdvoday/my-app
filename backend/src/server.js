@@ -3,7 +3,11 @@ require("dotenv").config();
 // Import các module cần thiết
 const express = require("express");
 const cors = require("cors"); // Cho phép cross-origin requests
+const bcrypt = require("bcryptjs");
 const connectDB = require("./config/db"); // Function kết nối MongoDB
+
+// Import models
+const User = require("./model/User");
 
 // Import routes
 const authRoutes = require("./routes/authRoutes");
@@ -15,6 +19,43 @@ const paymentRoutes = require("./routes/paymentRoutes");
 const analyticsRoutes = require("./routes/analyticsRoutes");
 const profileRoutes = require("./routes/profileRoutes");
 
+// Hàm tạo admin default
+const createDefaultAdmin = async () => {
+  try {
+    // Kiểm tra xem đã có admin nào chưa
+    const existingAdmin = await User.findOne({ role: "admin" });
+
+    if (existingAdmin) {
+      console.log("✓ Admin account already exists");
+      return;
+    }
+
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash("admin123", salt);
+
+    // Tạo admin account mặc định
+    const admin = await User.create({
+      name: "Administrator",
+      email: "admin@example.com",
+      password: hashedPassword,
+      phone: "0987654321",
+      role: "admin",
+      isEmailVerified: true,
+      status: "active",
+    });
+
+    console.log("\n╔════════════════════════════════════════╗");
+    console.log("║     DEFAULT ADMIN ACCOUNT CREATED      ║");
+    console.log("╠════════════════════════════════════════╣");
+    console.log("║ Email:    admin@example.com            ║");
+    console.log("║ Password: admin123                     ║");
+    console.log("╚════════════════════════════════════════╝\n");
+  } catch (error) {
+    console.error("Error creating default admin:", error.message);
+  }
+};
+
 // Khởi tạo Express application
 const app = express();
 
@@ -24,6 +65,9 @@ app.use(cors());
 app.use(express.json());
 
 connectDB();
+
+// Tạo admin default khi server start
+createDefaultAdmin();
 
 // Routes xác thực
 app.use("/api/auth", authRoutes);

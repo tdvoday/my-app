@@ -3,6 +3,7 @@
 ## Setup Postman Environment Variables
 
 Tạo environment trong Postman với các variables sau:
+
 ```
 BASE_URL: http://localhost:5000
 PATIENT_EMAIL: doctor1@example.com
@@ -20,6 +21,7 @@ DOCTOR_TOKEN: (sẽ được set sau khi doctor login)
 ## Test Sequence
 
 ### 1. Register Patient Account
+
 ```
 Request:
 POST {{BASE_URL}}/api/auth/register
@@ -40,6 +42,7 @@ pm.environment.set("PATIENT_ID", jsonData.user.id);
 ---
 
 ### 2. Admin Login
+
 ```
 Request:
 POST {{BASE_URL}}/api/auth/login
@@ -58,6 +61,7 @@ pm.environment.set("ADMIN_TOKEN", jsonData.token);
 ---
 
 ### 3. Assign Doctor Role (Admin)
+
 ```
 Request:
 POST {{BASE_URL}}/api/auth/assign-doctor
@@ -81,6 +85,7 @@ Body (raw JSON):
 ---
 
 ### 4. Doctor Login
+
 ```
 Request:
 POST {{BASE_URL}}/api/auth/login
@@ -103,6 +108,7 @@ pm.test("Doctor role verified", function () {
 ---
 
 ### 5. Get Doctor Profile (Verify)
+
 ```
 Request:
 GET {{BASE_URL}}/api/profile/me
@@ -133,6 +139,7 @@ Expected Response:
 Nếu không dùng Postman, có thể dùng cURL:
 
 ### Register
+
 ```bash
 curl -X POST http://localhost:5000/api/auth/register \
   -H "Content-Type: application/json" \
@@ -145,6 +152,7 @@ curl -X POST http://localhost:5000/api/auth/register \
 ```
 
 ### Admin Login
+
 ```bash
 curl -X POST http://localhost:5000/api/auth/login \
   -H "Content-Type: application/json" \
@@ -155,6 +163,7 @@ curl -X POST http://localhost:5000/api/auth/login \
 ```
 
 ### Assign Doctor
+
 ```bash
 curl -X POST http://localhost:5000/api/auth/assign-doctor \
   -H "Content-Type: application/json" \
@@ -171,6 +180,7 @@ curl -X POST http://localhost:5000/api/auth/assign-doctor \
 ```
 
 ### Doctor Login
+
 ```bash
 curl -X POST http://localhost:5000/api/auth/login \
   -H "Content-Type: application/json" \
@@ -181,6 +191,7 @@ curl -X POST http://localhost:5000/api/auth/login \
 ```
 
 ### Get Doctor Profile
+
 ```bash
 curl -X GET http://localhost:5000/api/profile/me \
   -H "Authorization: Bearer YOUR_DOCTOR_TOKEN_HERE"
@@ -201,17 +212,20 @@ curl -X GET http://localhost:5000/api/profile/me \
 ## Common Issues & Solutions
 
 ### Issue: "Email already exists"
+
 - Thay đổi email trong request
 
 ### Issue: "Invalid token" khi assign doctor
+
 - Đảm bảo admin token được copy chính xác
 - Token có thể hết hạn (7 days), login lại để lấy token mới
 
 ### Issue: "Please verify your email before logging in"
+
 - Patient cần verify email trước, hoặc
 - Cấu hình email service trong .env
 
 ### Issue: "Access denied" (403)
+
 - Đảm bảo token là admin token, không phải patient
 - Role của user trong token không đúng
-
